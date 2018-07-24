@@ -1,13 +1,22 @@
-# From https://github.com/Machyne/pal/blob/master/api/bonapp/bon_api.py
+# Modified from https://github.com/Machyne/pal/blob/master/api/bonapp/bon_api.py
 import requests
 import re, json
 
 # Constants
 CAFE_NAMES = ['bullseye-cafe', 'cafe-target', 'north-campus']
 CAFE_URL = 'https://target.cafebonappetit.com/cafe/{cafe_name}/{date}/'
-RE_CAFE_NAME = r'Bamco.current_cafe\s+=\s+(?:[^;]+)name:\s+\'(.*?)\'(?:[^;]+);' #TODO make sense of
+RE_CAFE_NAME = r'Bamco.current_cafe\s+=\s+(?:[^;]+)name:\s+\'(.*?)\'(?:[^;]+);'
 RE_MENU_ITEMS = r'Bamco.menu_items\s+=\s+(.+);'
 RE_DAYPARTS = r'Bamco.dayparts\[\'(\d+)\'\]\s+=\s+([^;]+);'
+
+# Constants for parsing menu
+NAME_FIELDS = [u'id', u'label']
+INFO_FIELDS = [u'description', u'cor_icon', u'price']
+EXTRA_FIELDS = [u'nutrition_details']
+MENU_FIELDS = NAME_FIELDS + INFO_FIELDS
+
+#MEAL_FIELDS = NAME_FIELDS + [u'station']
+#MEAL_STATION_FIELDS = NAME_FIELDS + [u'items']
 
 def get_page(cafe_name, date):
     """Doc"""
@@ -15,20 +24,13 @@ def get_page(cafe_name, date):
     response = requests.get(url, timeout=5.0, verify=False)
     return response.text
 
-def save_page():
-    file = open('cafe_menu.html', 'w+')
-    from datetime import date
-    file.write(get_page(CAFE_NAMES[1], date.today()))
-    file.close()
-
 def get_data_from_page(page):
     # Find the cafe
     name_data = re.findall(RE_CAFE_NAME, page)
     name = name_data[0]
 
     menu_data = re.findall(RE_MENU_ITEMS, page)
-    #print(menu)
-    menu = json.loads(menu_data[0]) if menu_data else None #TODO why only first item?
+    menu = json.loads(menu_data[0]) if menu_data else None
 
     dayparts = {}
     dayparts_nodes = re.findall(RE_DAYPARTS, page)
@@ -38,9 +40,21 @@ def get_data_from_page(page):
 
     return name, menu, dayparts
 
+def format_menu(data):
+    name = data[0]
+    menu = data[1]
+    dayparts = data[2]
+    # Given dict of items, return dict with item labels as keys
+    dishes = {}
+    for item_id in menu:
+        item = menu[item_id]
+        if (item["special"]):
+            print(item["label"])
+
 if __name__ == '__main__':
     from datetime import date
-    #save_page()
     response = get_page(CAFE_NAMES[1], date.today())
-    print(get_data_from_page(response))
-    get_data_from_page(response)
+    data = get_data_from_page(response)
+    #dishes = format_menu(data)
+    format_menu(data)
+
