@@ -15,7 +15,7 @@ authed_teams = {}
 
 
 class Bot(object):
-    """ Instanciates a Bot object to handle Slack onboarding interactions."""
+    """ Instantiates a Bot object to handle Slack onboarding interactions."""
     def __init__(self):
         super(Bot, self).__init__()
         self.name = "pythonboardingbot"
@@ -89,6 +89,7 @@ class Bot(object):
         """
         new_dm = self.client.api_call("im.open",
                                       user=user_id)
+        print(new_dm)
         dm_id = new_dm["channel"]["id"]
         return dm_id
 
@@ -247,3 +248,14 @@ class Bot(object):
                                             )
         # Update the timestamp saved on the message object
         message_obj.timestamp = post_message["ts"]
+
+    def message_user(self, user_id):
+        id_list = self.client.api_call("im.list")
+        print(id_list)
+        self.client.api_call("chat.postMessage",
+                                            channel=id_list,
+                                            username=self.name,
+                                            icon_emoji=self.emoji,
+                                            text="Greetings!",
+                                            )
+

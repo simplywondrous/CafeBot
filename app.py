@@ -35,15 +35,15 @@ def _event_handler(event_type, slack_event):
     # ================ Team Join Events =============== #
     # When the user first joins a team, the type of event will be team_join
     if event_type == "team_join":
-        user_id = slack_event["event"]["user"]["id"]
+        user_id = slack_event["event"]["user"]
         # Send the onboarding message
         pyBot.onboarding_message(team_id, user_id)
         return make_response("Welcome Message Sent", 200,)
 
-    print(event_type)
     # Test hello
     if event_type == "message" or event_type == "member_joined_channel":
-        print("Direct message!\n")
+        user_id = slack_event["event"]["user"]
+        pyBot.message_user(user_id)
         return make_response("Hi, nice to meet you!", 200)
 
     # ============== Share Message Events ============= #
