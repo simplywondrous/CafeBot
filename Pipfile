@@ -5,6 +5,9 @@ name = "pypi"
 
 [packages]
 requests = "*"
+slackclient = "*"
+flask = "*"
+slackeventsapi = "*"
 
 [dev-packages]
 pylint = "*"

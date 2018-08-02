@@ -2,4 +2,3 @@
 .vscode/
 .env
 .DS_Store
-Pipfile.lock
