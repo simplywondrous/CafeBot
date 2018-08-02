@@ -1,4 +1,5 @@
 *.html
-bon_api.py
 .vscode/
+.env
+.DS_Store
 Pipfile.lock

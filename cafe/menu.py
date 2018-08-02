@@ -11,11 +11,16 @@ class Menu:
     def __str__(self):
         printout = ""
         for meal in self.meals:
-            printout += meal.name + "\n"
+            meal_string = '\033[4m{:^30}\033[0m\n\n'.format((meal.name).upper())
+            printout += meal_string
             for station in meal.stations:
-                printout += "\t" + meal.stations[station].name + "\n"
+                meal_string = '{:^20}\n'.format((meal.stations[station].name).title())
+                #printout += "\t" + meal.stations[station].name + "\n"
+                printout += meal_string
                 for special in meal.stations[station].specials:
-                    printout += "\t\t" + special["label"] + "\n"
+                    # TODO - uppercase first letter
+                    printout += "\t\t" + special["label"] + "\t" + special["price"] + "\n"
+            printout += "\n"
         return printout
 
 class Meal:
