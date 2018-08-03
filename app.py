@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-A routing layer for the onboarding bot tutorial built using
-[Slack's Events API](https://api.slack.com/events-api) in Python
-"""
 import json
 import bot
 from flask import Flask, request, make_response, render_template
@@ -37,14 +33,14 @@ def _event_handler(event_type, slack_event):
     if event_type == "team_join":
         user_id = slack_event["event"]["user"]
         # Send the onboarding message
-        pyBot.onboarding_message(team_id, user_id)
+        pyBot.onboarding_message(user_id)
         return make_response("Welcome Message Sent", 200,)
 
-    # Test hello
+    # Test basic message
     if event_type == "message" and not slack_event["event"].get("subtype"):
         user_id = slack_event["event"]["user"]
         pyBot.message_user(user_id)
-        return make_response("Hi, nice to meet you!", 200)
+        return make_response("Message Sent", 200)
 
     # ============== Share Message Events ============= #
     # If the user has shared the onboarding message, the event type will be
@@ -126,7 +122,7 @@ def hears():
         return make_response(slack_event["challenge"], 200, {"content_type":
                                                              "application/json"
                                                              })
-
+    """
     # ============ Slack Token Verification =========== #
     # We can verify the request is coming from Slack by checking that the
     # verification token in the request matches our app's settings
@@ -136,7 +132,7 @@ def hears():
         # By adding "X-Slack-No-Retry" : 1 to our response headers, we turn off
         # Slack's automatic retries during development.
         make_response(message, 403, {"X-Slack-No-Retry": 1})
-
+    """
     # ====== Process Incoming Events from Slack ======= #
     # If the incoming request is an Event we've subcribed to
     if "event" in slack_event:

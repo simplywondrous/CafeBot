@@ -19,7 +19,7 @@ class Bot(object):
     def __init__(self):
         super(Bot, self).__init__()
         self.name = "cafebot"
-        self.emoji = ":robot_face:"
+        self.emoji = ":target:"
         # When we instantiate a new bot object, we can access the app
         # credentials we set earlier in our local development environment.
         self.oauth = {"client_id": os.environ.get("CLIENT_ID"),
@@ -36,8 +36,8 @@ class Bot(object):
         # client with a valid OAuth token once we have one.
         self.client = SlackClient("")
         # We'll use this dictionary to store the state of each message object.
-        # In a production envrionment you'll likely want to store this more
-        # persistantly in  a database.
+        # In a production environment you'll likely want to store this more
+        # persistantly in a database.
         self.messages = {}
 
     def auth(self, code):
@@ -93,7 +93,7 @@ class Bot(object):
         dm_id = new_dm["channel"]["id"]
         return dm_id
 
-    def onboarding_message(self, team_id, user_id):
+    def onboarding_message(self, user_id):
         """
         Create and send an onboarding welcome message to new users. Save the
         time stamp of this message on the message object for updating in the
@@ -101,8 +101,6 @@ class Bot(object):
 
         Parameters
         ----------
-        team_id : str
-            id of the Slack team associated with the incoming event
         user_id : str
             id of the Slack user associated with the incoming event
 
@@ -114,17 +112,19 @@ class Bot(object):
 
         # First, we'll check to see if there's already messages our bot knows
         # of for the team id we've got.
-        if self.messages.get(team_id):
+        if self.messages.get(user_id):
             # Then we'll update the message dictionary with a key for the
             # user id we've recieved and a value of a new message object
-            self.messages[team_id].update({user_id: message.Message()})
+            self.messages[user_id].insert(0, {"message": message.Message()})
         else:
-            # If there aren't any message for that team, we'll add a dictionary
+            # If there aren't any messages for that team, we'll add a dictionary
             # of messages for that team id on our Bot's messages attribute
             # and we'll add the first message object to the dictionary with
             # the user's id as a key for easy access later.
-            self.messages[team_id] = {user_id: message.Message()}
-        message_obj = self.messages[team_id][user_id]
+            self.messages[user_id] = []
+            self.messages[user_id].append({"message": message.Message()})
+        # TODO - figure out if can use pop instead, along with if insert is necessary
+        message_obj = (self.messages[user_id])[0]["message"]
         # Then we'll set that message object's channel attribute to the DM
         # of the user we'll communicate with
         message_obj.channel = self.open_dm(user_id)
@@ -249,6 +249,7 @@ class Bot(object):
         # Update the timestamp saved on the message object
         message_obj.timestamp = post_message["ts"]
 
+    # test - basic message
     def message_user(self, user_id):
         id_list = self.client.api_call("im.list")
         channel_id = None
