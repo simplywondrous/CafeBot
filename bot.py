@@ -18,7 +18,7 @@ class Bot(object):
     """ Instantiates a Bot object to handle Slack onboarding interactions."""
     def __init__(self):
         super(Bot, self).__init__()
-        self.name = "pythonboardingbot"
+        self.name = "cafebot"
         self.emoji = ":robot_face:"
         # When we instantiate a new bot object, we can access the app
         # credentials we set earlier in our local development environment.
@@ -251,9 +251,12 @@ class Bot(object):
 
     def message_user(self, user_id):
         id_list = self.client.api_call("im.list")
-        print(id_list)
+        channel_id = None
+        for im in id_list["ims"]:
+            if im["user"] == user_id:
+                channel_id = im["id"]
         self.client.api_call("chat.postMessage",
-                                            channel=id_list,
+                                            channel=channel_id,
                                             username=self.name,
                                             icon_emoji=self.emoji,
                                             text="Greetings!",
