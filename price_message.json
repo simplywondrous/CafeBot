@@ -1,0 +1,23 @@
+{
+    "attachments": [
+        {
+            "text": "Display Item Prices?",
+            "callback_id": "price_check",
+            "attachment_type": "default",
+            "actions": [
+                {
+                    "name": "Yes",
+                    "text": "Yes",
+                    "type": "button",
+                    "value": "yes"
+                },
+                {
+                    "name": "No",
+                    "text": "No",
+                    "type": "button",
+                    "value": "no"
+                }
+            ]
+        }
+    ]
+}

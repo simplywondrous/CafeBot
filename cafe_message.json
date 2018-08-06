@@ -1,0 +1,30 @@
+{
+    "attachments": [
+        {
+            "fallback": "Cafeteria Menu Selection",
+            "text": "Default Cafeteria:",
+            "callback_id": "cafe_name",
+            "attachment_type": "default",
+            "actions": [
+                {
+                    "name": "TPS / TPN",
+                    "text": "TPS / TPN",
+                    "type": "button",
+                    "value": "cafe-target"
+                },
+                {
+                    "name": "CC",
+                    "text": "CC",
+                    "type": "button",
+                    "value": "bullseye-cafe"
+                },
+                {
+                    "name": "TNC",
+                    "text": "TNC",
+                    "type": "button",
+                    "value": "north-campus"
+                }
+            ]
+        }
+    ]
+}

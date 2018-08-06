@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 import json
 import bot
-from flask import Flask, request, make_response, render_template
+from flask import Flask, request, make_response, render_template, g
+import threading
+import time
+import requests
 
 pyBot = bot.Bot()
 slack = pyBot.client
@@ -28,19 +31,22 @@ def _event_handler(event_type, slack_event):
 
     """
     team_id = slack_event["team_id"]
+
+    """
+    # Test basic message to bot
+    if event_type == "message" and not slack_event["event"].get("subtype"):
+        user_id = slack_event["event"]["user"]
+        pyBot.message_user(user_id)
+        return make_response("Message Sent", 200)
+    """
+
     # ================ Team Join Events =============== #
     # When the user first joins a team, the type of event will be team_join
     if event_type == "team_join":
         user_id = slack_event["event"]["user"]
         # Send the onboarding message
-        pyBot.onboarding_message(user_id)
+        pyBot.check_welcome(user_id)
         return make_response("Welcome Message Sent", 200,)
-
-    # Test basic message
-    if event_type == "message" and not slack_event["event"].get("subtype"):
-        user_id = slack_event["event"]["user"]
-        pyBot.message_user(user_id)
-        return make_response("Message Sent", 200)
 
     # ============== Share Message Events ============= #
     # If the user has shared the onboarding message, the event type will be
@@ -76,6 +82,35 @@ def _event_handler(event_type, slack_event):
     # Return a helpful error message
     return make_response(message, 200, {"X-Slack-No-Retry": 1})
 
+def start_runner():
+    def start_loop():
+        not_started = True
+        while not_started:
+            # print('In start loop')
+            try:
+                r = requests.get('http://127.0.0.1:5000/')
+                if r.status_code == 200:
+                    # print('Server started, quitting start_loop')
+                    not_started = False
+                print(r.status_code)
+            except:
+                print('Server not yet started')
+            time.sleep(2)
+
+    # print('Started runner')
+    thread = threading.Thread(target=start_loop)
+    thread.start()
+
+@app.before_first_request
+def activate_job():
+    def run_job():
+        while True:
+            #print("Run recurring task")
+            pyBot.send_menu()
+            time.sleep(10)
+
+    thread = threading.Thread(target=run_job)
+    thread.start()
 
 @app.route("/install", methods=["GET"])
 def pre_install():
@@ -104,6 +139,22 @@ def thanks():
     pyBot.auth(code_arg)
     return render_template("thanks.html")
 
+@app.route("/interactive", methods=["GET", "POST"])
+def respond():
+    form_json = json.loads(request.form["payload"])
+
+    # Bot should handle all of this logic - so pass all info to bot
+    # Check to see what the user's selection was and update the message
+    user_id = form_json["user"]["id"]
+    callback_id = form_json["callback_id"]
+    name = form_json["actions"][0]["name"]
+    val_selected = form_json["actions"][0]["value"]
+    channel=form_json["channel"]["id"]
+    ts = form_json["message_ts"]
+    pyBot.process_selection(user_id, callback_id, name, val_selected, channel, ts)
+
+    return make_response("", 200)
+
 
 @app.route("/listening", methods=["GET", "POST"])
 def hears():
@@ -122,7 +173,7 @@ def hears():
         return make_response(slack_event["challenge"], 200, {"content_type":
                                                              "application/json"
                                                              })
-    """
+    
     # ============ Slack Token Verification =========== #
     # We can verify the request is coming from Slack by checking that the
     # verification token in the request matches our app's settings
@@ -132,7 +183,7 @@ def hears():
         # By adding "X-Slack-No-Retry" : 1 to our response headers, we turn off
         # Slack's automatic retries during development.
         make_response(message, 403, {"X-Slack-No-Retry": 1})
-    """
+    
     # ====== Process Incoming Events from Slack ======= #
     # If the incoming request is an Event we've subcribed to
     if "event" in slack_event:
@@ -144,6 +195,18 @@ def hears():
     return make_response("[NO EVENT IN SLACK REQUEST] These are not the droids\
                          you're looking for.", 404, {"X-Slack-No-Retry": 1})
 
+@app.teardown_appcontext
+def close_connection(exception):
+    """
+    This is called when the request has been handled to make sure the database connection closes/flushes. See this
+    example for more details: http://flask.pocoo.org/docs/0.12/patterns/sqlite3/
+    :param exception: n/a
+    """
+    db = getattr(g, '_database', None)
+    if db is not None:
+        db.close()
+
 
 if __name__ == '__main__':
+    #start_runner()
     app.run(debug=True)

@@ -4,6 +4,7 @@ Python Slack Bot class for use with the pythOnBoarding app
 """
 import os
 import message
+import cafe.script as cafe
 
 from slackclient import SlackClient
 
@@ -93,7 +94,7 @@ class Bot(object):
         dm_id = new_dm["channel"]["id"]
         return dm_id
 
-    def onboarding_message(self, user_id):
+    def welcome_message(self, user_id):
         """
         Create and send an onboarding welcome message to new users. Save the
         time stamp of this message on the message object for updating in the
@@ -145,6 +146,93 @@ class Bot(object):
         # message object which we'll use to update the message after a user
         # has completed an onboarding task.
         message_obj.timestamp = timestamp
+
+        # test - basic message
+    def message_user(self, channel, text):
+        self.client.api_call("chat.postMessage",
+                            channel=channel,
+                            username=self.name,
+                            icon_emoji=self.emoji,
+                            text=text,
+        )
+
+    def ask_question(self, user_id, message_name):
+        """
+        Create and send an onboarding welcome message to new users. Save the
+        time stamp of this message on the message object for updating in the
+        future.
+
+        Parameters
+        ----------
+        user_id : str
+            id of the Slack user associated with the incoming event
+
+        """
+        message_obj = message.Message()
+        message_obj.channel = self.open_dm(user_id)
+        message_obj.create_attachments(message_name + '.json')
+        self.client.api_call("chat.postMessage",
+            channel=message_obj.channel,
+            username=self.name,
+            icon_emoji=self.emoji,
+            text=message_obj.text,
+            attachments=message_obj.attachments
+        )
+
+    def check_welcome(self, user_id):
+        # if price is already set skip, else
+        # if cafe is set send price
+        # else send cafe
+        channel = self.open_dm(user_id)
+        self.message_user(channel, "Welcome to the Target Slack!")
+        self.message_user(channel, ("I'm your friendly neighborhood cafe bot, "
+                                    "and I deliver the cafeteria menu straight here daily"))
+        self.message_user(channel, ("Choose your settings to get started!\n"
+                                    "(You'll be able to change this at any time)."))
+        self.ask_question(user_id, "cafe_message")
+
+    def send_menu(self):
+        # For each user in db
+        # Check user settings, if both cafe and price set, get and send message
+        cafe_menu = cafe.get_menu("north-campus")
+        text = cafe_menu.print(True)
+        user_id = "UC1SWPH0D"
+        channel = self.open_dm(user_id)
+        self.message_user(channel, text)
+
+    def process_selection(self, user_id, callback_id, text_name, val_selected, channel, ts):
+        # save in db based on choice
+        print(val_selected + " would be put in db")
+
+        question = ""
+        if (callback_id == "cafe_name"):
+            question = "Default Cafeteria:"
+        else:
+            question = "Display Item Prices?"
+        # update message
+        self.client.api_call( "chat.update",
+            channel = channel,
+            ts = ts,
+            text = question,
+            attachments=[
+                {
+                    "text": "You chose: " + text_name,
+                    "attachment_type": "default",
+                    "color": "good"
+                }
+            ]
+        )
+        # if choice = cafe, send next question
+        if callback_id == "cafe_name":
+            self.ask_question(user_id, "price_message")
+
+        if callback_id == "price_check":
+            self.client.api_call( "chat.postMessage",
+                channel = channel,
+                username=self.name,
+                icon_emoji=self.emoji,
+                text="Thanks! I'll update your preferences now. Look forward to a daily menu!",
+            )
 
     def update_emoji(self, team_id, user_id):
         """
@@ -245,21 +333,8 @@ class Bot(object):
                                             ts=message_obj.timestamp,
                                             text=message_obj.text,
                                             attachments=message_obj.attachments
-                                            )
+        )
         # Update the timestamp saved on the message object
         message_obj.timestamp = post_message["ts"]
 
-    # test - basic message
-    def message_user(self, user_id):
-        id_list = self.client.api_call("im.list")
-        channel_id = None
-        for im in id_list["ims"]:
-            if im["user"] == user_id:
-                channel_id = im["id"]
-        self.client.api_call("chat.postMessage",
-                                            channel=channel_id,
-                                            username=self.name,
-                                            icon_emoji=self.emoji,
-                                            text="Greetings!",
-                                            )
 

@@ -8,6 +8,7 @@ requests = "*"
 slackclient = "*"
 flask = "*"
 slackeventsapi = "*"
+pyyaml = "*"
 
 [dev-packages]
 pylint = "*"

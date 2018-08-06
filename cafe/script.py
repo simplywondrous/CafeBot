@@ -1,7 +1,8 @@
 # Modified from https://github.com/Machyne/pal/blob/master/api/bonapp/bon_api.py
 import requests
 import re, json
-import menu
+import cafe.menu as menu
+import sys
 
 # Constants
 CAFE_NAMES = ['bullseye-cafe', 'cafe-target', 'north-campus']
@@ -65,25 +66,23 @@ def combine(data):
             station.add_special(short_item)
 
         final_menu.add_meal(meal)
-    print(final_menu)
+    return final_menu
 
 def get_specials(menu):
     specials = []
     for item_id in menu:
         if menu[item_id]["special"]:
             specials.append(menu[item_id])
-    #print(specials)
     return specials
 
 # Bullseye cafe = CC, Cafe Target = TPS / TPN, TNC
-"""
 def get_menu(cafe_name):
     from datetime import date
-    response = get_page(CAFE_NAMES[2], date.today())
-"""
-
-if __name__ == '__main__':
-    from datetime import date
-    response = get_page(CAFE_NAMES[2], date.today())
+    response = get_page(cafe_name, date.today())
     data = get_data_from_page(response)
-    combine(data)
+    return combine(data)
+
+# arg0 = cafe-name, arg1 = bool show price
+if __name__ == '__main__':
+    menu = get_menu(sys.argv[0])
+    menu.print(sys.argv[1])
