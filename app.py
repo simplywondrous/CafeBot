@@ -5,6 +5,7 @@ from flask import Flask, request, make_response, render_template, g
 import threading
 import time
 import requests
+import schedule
 
 pyBot = bot.Bot()
 slack = pyBot.client
@@ -30,7 +31,6 @@ def _event_handler(event_type, slack_event):
         Response object with 200 - ok or 500 - No Event Handler error
 
     """
-    team_id = slack_event["team_id"]
 
     """
     # Test basic message to bot
@@ -48,69 +48,54 @@ def _event_handler(event_type, slack_event):
         pyBot.check_welcome(user_id)
         return make_response("Welcome Message Sent", 200,)
 
-    # ============== Share Message Events ============= #
-    # If the user has shared the onboarding message, the event type will be
-    # message. We'll also need to check that this is a message that has been
-    # shared by looking into the attachments for "is_shared".
-    elif event_type == "message" and slack_event["event"].get("attachments"):
-        user_id = slack_event["event"].get("user")
-        if slack_event["event"]["attachments"][0].get("is_share"):
-            # Update the onboarding message and check off "Share this Message"
-            pyBot.update_share(team_id, user_id)
-            return make_response("Welcome message updates with shared message",
-                                 200,)
-
-    # ============= Reaction Added Events ============= #
-    # If the user has added an emoji reaction to the onboarding message
-    elif event_type == "reaction_added":
-        user_id = slack_event["event"]["user"]
-        # Update the onboarding message
-        pyBot.update_emoji(team_id, user_id)
-        return make_response("Welcome message updates with reactji", 200,)
-
-    # =============== Pin Added Events ================ #
-    # If the user has added an emoji reaction to the onboarding message
-    elif event_type == "pin_added":
-        user_id = slack_event["event"]["user"]
-        # Update the onboarding message
-        pyBot.update_pin(team_id, user_id)
-        return make_response("Welcome message updates with pin", 200,)
-
     # ============= Event Type Not Found! ============= #
     # If the event_type does not have a handler
     message = "You have not added an event handler for the %s" % event_type
     # Return a helpful error message
     return make_response(message, 200, {"X-Slack-No-Retry": 1})
 
+"""
+# Need to visit site once before "beforefirstrequest" will activate
+# - Call start_runner() before app.run
+# Currently not true but will leave code here for now
 def start_runner():
     def start_loop():
         not_started = True
         while not_started:
             # print('In start loop')
             try:
+                time.sleep(35)
                 r = requests.get('http://127.0.0.1:5000/')
                 if r.status_code == 200:
                     # print('Server started, quitting start_loop')
                     not_started = False
+                    print("Server started")
                 print(r.status_code)
             except:
                 print('Server not yet started')
-            time.sleep(2)
+            time.sleep(10)
 
     # print('Started runner')
     thread = threading.Thread(target=start_loop)
     thread.start()
+"""
 
 @app.before_first_request
 def activate_job():
     def run_job():
         while True:
+            time.sleep(35)
             #print("Run recurring task")
             pyBot.send_menu()
-            time.sleep(10)
+            #schedule.every().day.at("15:57").do(pyBot.send_menu)
+            time.sleep(1000000)
 
     thread = threading.Thread(target=run_job)
     thread.start()
+
+@app.route("/")
+def hello():
+    return "Hello All"
 
 @app.route("/install", methods=["GET"])
 def pre_install():
@@ -208,5 +193,4 @@ def close_connection(exception):
 
 
 if __name__ == '__main__':
-    #start_runner()
     app.run(debug=True)

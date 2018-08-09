@@ -11,6 +11,7 @@ RE_CAFE_NAME = r'Bamco.current_cafe\s+=\s+(?:[^;]+)name:\s+\'(.*?)\'(?:[^;]+);'
 RE_MENU_ITEMS = r'Bamco.menu_items\s+=\s+(.+);'
 RE_DAYPARTS = r'Bamco.dayparts\[\'(\d+)\'\]\s+=\s+([^;]+);'
 RE_STATION_EXTRA = r'<(.*?)>@?'
+RE_SPACE = r'(&nbsp;)?'
 
 # Constants for parsing menu
 NAME_FIELDS = [u'id', u'label']
@@ -46,28 +47,53 @@ def combine(data):
 
     final_menu = menu.Menu(data[0])
 
-    # Get meal
+    # list of meal objects
+    meal_list = []
+    # first index = meal name, second is list of item ids in meal
+    meal_id_list = []
+    # Get Daypart and make meal
     for daypart_id in dayparts:
-        meal = menu.Meal(dayparts[daypart_id]["label"])
-        # Get specials
-        specials = get_specials(menu_data)
-        for item in specials:
-            # Make shortened item
-            short_item = {}
-            for field in MENU_FIELDS:
-                short_item[field] = item[field]
-            # Get station / add station to meal
-            station_name = re.sub(RE_STATION_EXTRA, "", item["station"])
-            if station_name not in meal.stations:
-                station = menu.Station(station_name)
-                meal.add_station(station)
-            station = meal.stations[station_name]
-            # Add item to station
-            station.add_special(short_item)
+        label = dayparts[daypart_id]["label"]
+        meal = menu.Meal(label)
+        meal_list.append(meal)
+        # get daypart -> stations -> ids and put all in list (three lists)
+        meal_items = []
+        meal_items.append(label)
+        for station in dayparts[daypart_id]["stations"]:
+            for item_id in station["items"]:
+                meal_items.append(item_id)
+        meal_id_list.append(meal_items)
 
+    # Get specials
+    specials = get_specials(menu_data)
+    for item in specials:
+        # Make shortened item
+        short_item = {}
+        for field in MENU_FIELDS:
+            if field == "price":
+                price = re.sub(RE_SPACE, "", item[field])
+                # print(price)
+                short_item[field] = price
+            else:
+                short_item[field] = item[field]
+        # Check under which of the three meal lists
+        for meal_items in meal_id_list:
+            if short_item["id"] in meal_items:
+                station_name = re.sub(RE_STATION_EXTRA, "", item["station"])
+                for meal in meal_list:
+                    if meal.name == meal_items[0]:
+                        # create Station obj for special if not already under meal, if under meal add station
+                        if meal.stations.get(station_name):
+                            meal.stations[station_name].add_special(short_item)
+                        else:
+                            station = menu.Station(station_name)
+                            station.add_special(short_item)
+                            meal.add_station(station)
+    
+    for meal in meal_list:
         final_menu.add_meal(meal)
     return final_menu
-
+                        
 def get_specials(menu):
     specials = []
     for item_id in menu:
@@ -84,5 +110,5 @@ def get_menu(cafe_name):
 
 # arg0 = cafe-name, arg1 = bool show price
 if __name__ == '__main__':
-    menu = get_menu(sys.argv[0])
-    menu.print(sys.argv[1])
+    menu = get_menu(CAFE_NAMES[2])
+    print(menu.print(sys.argv[1]))
