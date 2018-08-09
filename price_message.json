@@ -9,13 +9,13 @@
                     "name": "Yes",
                     "text": "Yes",
                     "type": "button",
-                    "value": "yes"
+                    "value": "1"
                 },
                 {
                     "name": "No",
                     "text": "No",
                     "type": "button",
-                    "value": "no"
+                    "value": "0"
                 }
             ]
         }

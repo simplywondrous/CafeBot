@@ -3,8 +3,10 @@
 Python Slack Bot class modified from the Slack pythOnBoarding app
 """
 import os
+import time
 import message
 import cafe.script as cafe
+import settings_db as db
 
 from slackclient import SlackClient
 
@@ -12,8 +14,9 @@ from slackclient import SlackClient
 # associated with each team, we can store this information in memory on
 # as a global object. When your bot is out of development, it's best to
 # save this in a more persistant memory store.
-authed_teams = {}
 
+# Only one team (TTS Slack) in this case
+authed_teams = {}
 
 class Bot(object):
     """ Instantiates a Bot object to handle Slack onboarding interactions."""
@@ -148,34 +151,34 @@ class Bot(object):
                 message += (meal.stations[station].name).title() + "\n"
                 for special in meal.stations[station].specials:
                     item = ">" + special["label"].title()
-                    price_str = ""
                     if price:
-                        price_str = special["price"]
-                    line = item + '.'*(100 - len(item) - len(price_str)) + price_str + "\n"
-                    message += line
+                        item += '.'*(100 - len(item) - len(special["price"])) + special["price"]
+                    message += item + "\n"
         return message
 
     def send_menu(self):
         # For each user in db
         # Check user settings, if both cafe and price set, get and send message
-        price = True
-        cafe_menu = cafe.get_menu("north-campus")
-        text = self.format_message(cafe_menu, price)
-        # user_id = "UC1SWPH0D"
+        #ids = db.get_user_ids()
+        #print(str(ids))
+        
+        #for user_id in ids:
         user_id = "UC1S8K38D"
+        cafe_name = db.get_cafe_setting(user_id)
+        price = db.get_price_setting(user_id)
+        menu = cafe.get_menu(cafe_name)
+        text = self.format_message(menu, price)
         channel = self.open_dm(user_id)
         self.message_user(channel, text)
+        
 
     def process_selection(self, user_id, callback_id, text_name, val_selected, channel, ts):
-        # save in db based on choice
-        print(val_selected + " would be put in db")
-
+        # update message
         question = ""
         if (callback_id == "cafe_name"):
             question = "Default Cafeteria:"
         else:
             question = "Display Item Prices?"
-        # update message
         self.client.api_call( "chat.update",
             channel = channel,
             ts = ts,
@@ -188,11 +191,16 @@ class Bot(object):
                 }
             ]
         )
-        # if choice = cafe, send next question
+        # Brief pause
+        time.sleep(1)
+        # save choice, if choice = cafe send next question, else thanks message
         if callback_id == "cafe_name":
+            db.put_cafe_setting(user_id, val_selected)
             self.ask_question(user_id, "price_message")
 
         if callback_id == "price_check":
+            print("Price: " + str(val_selected) + "\n")
+            db.put_price_setting(user_id, val_selected)
             self.client.api_call( "chat.postMessage",
                 channel = channel,
                 username=self.name,

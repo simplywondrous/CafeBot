@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+"""
+Python Slack app modified from the Slack pythOnBoarding app
+"""
 import json
 import bot
 from flask import Flask, request, make_response, render_template, g
@@ -57,7 +60,7 @@ def _event_handler(event_type, slack_event):
 """
 # Need to visit site once before "beforefirstrequest" will activate
 # - Call start_runner() before app.run
-# Currently not true but will leave code here for now
+# Currently seems that's not the case but will leave code here for now
 def start_runner():
     def start_loop():
         not_started = True
@@ -84,9 +87,9 @@ def start_runner():
 def activate_job():
     def run_job():
         while True:
-            time.sleep(35)
-            #print("Run recurring task")
-            pyBot.send_menu()
+            time.sleep(45)
+            with app.app_context():
+                pyBot.send_menu()
             #schedule.every().day.at("15:57").do(pyBot.send_menu)
             time.sleep(1000000)
 
@@ -183,8 +186,9 @@ def hears():
 @app.teardown_appcontext
 def close_connection(exception):
     """
-    This is called when the request has been handled to make sure the database connection closes/flushes. See this
-    example for more details: http://flask.pocoo.org/docs/0.12/patterns/sqlite3/
+    This is called when the request has been handled to make sure the database 
+    connection closes/flushes. 
+    See this example for more details: http://flask.pocoo.org/docs/0.12/patterns/sqlite3/
     :param exception: n/a
     """
     db = getattr(g, '_database', None)
