@@ -7,7 +7,3 @@ CREATE TABLE PriceSettings (
     user_id TEXT PRIMARY KEY,
     price_bool INTEGER NOT NULL
 );
-
-CREATE TABLE UserIds (
-    user_id TEXT
-);

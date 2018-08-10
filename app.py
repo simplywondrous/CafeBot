@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Python Slack app modified from the Slack pythOnBoarding app
+Python Slack app for the Target Cafeterias
+modified from the Slack pythOnBoarding app
+For questions: github.com/simplywondrous/cafebot
 """
 import json
 import bot
@@ -35,14 +37,6 @@ def _event_handler(event_type, slack_event):
 
     """
 
-    """
-    # Test basic message to bot
-    if event_type == "message" and not slack_event["event"].get("subtype"):
-        user_id = slack_event["event"]["user"]
-        pyBot.message_user(user_id)
-        return make_response("Message Sent", 200)
-    """
-
     # ================ Team Join Events =============== #
     # When the user first joins a team, the type of event will be team_join
     if event_type == "team_join":
@@ -57,48 +51,29 @@ def _event_handler(event_type, slack_event):
     # Return a helpful error message
     return make_response(message, 200, {"X-Slack-No-Retry": 1})
 
-"""
-# Need to visit site once before "beforefirstrequest" will activate
-# - Call start_runner() before app.run
-# Currently seems that's not the case but will leave code here for now
-def start_runner():
-    def start_loop():
-        not_started = True
-        while not_started:
-            # print('In start loop')
-            try:
-                time.sleep(35)
-                r = requests.get('http://127.0.0.1:5000/')
-                if r.status_code == 200:
-                    # print('Server started, quitting start_loop')
-                    not_started = False
-                    print("Server started")
-                print(r.status_code)
-            except:
-                print('Server not yet started')
-            time.sleep(10)
-
-    # print('Started runner')
-    thread = threading.Thread(target=start_loop)
-    thread.start()
-"""
 
 @app.before_first_request
 def activate_job():
+    """
+    Runs from application start to application stop
+    Schedules the bot to send the menu every day
+    """
     def run_job():
         while True:
-            time.sleep(45)
+            time.sleep(35)
             with app.app_context():
                 pyBot.send_menu()
-            #schedule.every().day.at("15:57").do(pyBot.send_menu)
+                #schedule.every().day.at("07:00").do(pyBot.send_menu)
             time.sleep(1000000)
 
     thread = threading.Thread(target=run_job)
     thread.start()
 
+
 @app.route("/")
 def hello():
     return "Hello All"
+
 
 @app.route("/install", methods=["GET"])
 def pre_install():
@@ -126,6 +101,7 @@ def thanks():
     # The bot's auth method to handles exchanging the code for an OAuth token
     pyBot.auth(code_arg)
     return render_template("thanks.html")
+
 
 @app.route("/interactive", methods=["GET", "POST"])
 def respond():
@@ -182,6 +158,7 @@ def hears():
     # send a quirky but helpful error response
     return make_response("[NO EVENT IN SLACK REQUEST] These are not the droids\
                          you're looking for.", 404, {"X-Slack-No-Retry": 1})
+
 
 @app.teardown_appcontext
 def close_connection(exception):

@@ -18,6 +18,7 @@ from slackclient import SlackClient
 # Only one team (TTS Slack) in this case
 authed_teams = {}
 
+
 class Bot(object):
     """ Instantiates a Bot object to handle Slack onboarding interactions."""
     def __init__(self):
@@ -43,6 +44,7 @@ class Bot(object):
         # In a production environment you'll likely want to store this more
         # persistantly in a database.
         self.messages = {}
+
 
     def auth(self, code):
         """
@@ -78,6 +80,7 @@ class Bot(object):
         # bot token
         self.client = SlackClient(authed_teams[team_id]["bot_token"])
 
+
     def open_dm(self, user_id):
         """
         Open a DM to send a welcome message when a 'team_join' event is
@@ -99,6 +102,7 @@ class Bot(object):
         dm_id = new_dm["channel"]["id"]
         return dm_id
 
+
     # basic message
     def message_user(self, channel, text):
         self.client.api_call("chat.postMessage",
@@ -107,6 +111,7 @@ class Bot(object):
                             icon_emoji=self.emoji,
                             text=text,
         )
+
 
     def ask_question(self, user_id, message_name):
         """
@@ -131,6 +136,7 @@ class Bot(object):
             attachments=message_obj.attachments
         )
 
+
     def check_welcome(self, user_id):
         # if price is already set skip, else
         # if cafe is set send price
@@ -142,6 +148,7 @@ class Bot(object):
         self.message_user(channel, ("Choose your settings to get started!\n"
                                     "(You'll be able to change these at any time)."))
         self.ask_question(user_id, "cafe_message")
+
 
     def format_message(self, menu, price):
         message = ""
@@ -156,20 +163,17 @@ class Bot(object):
                     message += item + "\n"
         return message
 
+
     def send_menu(self):
-        # For each user in db
-        # Check user settings, if both cafe and price set, get and send message
-        #ids = db.get_user_ids()
-        #print(str(ids))
-        
-        #for user_id in ids:
-        user_id = "UC1S8K38D"
-        cafe_name = db.get_cafe_setting(user_id)
-        price = db.get_price_setting(user_id)
-        menu = cafe.get_menu(cafe_name)
-        text = self.format_message(menu, price)
-        channel = self.open_dm(user_id)
-        self.message_user(channel, text)
+        ids = db.get_user_ids()
+        for user_id in ids:
+            print(str(user_id) + "\n")
+            cafe_name = db.get_cafe_setting(user_id)
+            price = db.get_price_setting(user_id)
+            menu = cafe.get_menu(cafe_name)
+            text = self.format_message(menu, price)
+            channel = self.open_dm(user_id)
+            self.message_user(channel, text)
         
 
     def process_selection(self, user_id, callback_id, text_name, val_selected, channel, ts):
@@ -199,7 +203,6 @@ class Bot(object):
             self.ask_question(user_id, "price_message")
 
         if callback_id == "price_check":
-            print("Price: " + str(val_selected) + "\n")
             db.put_price_setting(user_id, val_selected)
             self.client.api_call( "chat.postMessage",
                 channel = channel,

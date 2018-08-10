@@ -9,7 +9,7 @@ GET_CAFE_SETTING = 'SELECT selected_cafe FROM CafeSettings WHERE user_id = ?'
 PUT_CAFE_SETTING = 'REPLACE INTO CafeSettings VALUES (?, ?)'
 GET_PRICE_SETTING = 'SELECT price_bool FROM PriceSettings WHERE user_id = ?'
 PUT_PRICE_SETTING = 'REPLACE INTO PriceSettings VALUES (?, ?)'
-GET_USER_IDS = 'SELECT user_id FROM UserIds'
+GET_USER_IDS = 'SELECT user_id FROM PriceSettings'
 
 
 """
@@ -49,7 +49,12 @@ def _query_db(query, args=(), one=False):
 
 
 def get_user_ids():
-    return _query_db(GET_USER_IDS, (), True)
+    user_row = _query_db(GET_USER_IDS)
+
+    if user_row is not None:
+        return user_row[0]
+    else:
+        return None
 
 
 def get_cafe_setting(user_id):
