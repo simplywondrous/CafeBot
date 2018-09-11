@@ -49,6 +49,10 @@ def _query_db(query, args=(), one=False):
 
 
 def get_user_ids():
+    """
+    Get all user ids.
+    :return: row of user ids
+    """
     user_row = _query_db(GET_USER_IDS)
 
     if user_row is not None:

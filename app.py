@@ -2,7 +2,6 @@
 """
 Python Slack app for the Target Cafeterias
 modified from the Slack pythOnBoarding app
-For questions: github.com/simplywondrous/cafebot
 """
 import json
 import bot
@@ -63,7 +62,7 @@ def activate_job():
             time.sleep(35)
             with app.app_context():
                 pyBot.send_menu()
-                #schedule.every().day.at("07:00").do(pyBot.send_menu)
+                schedule.every().day.at("07:00").do(pyBot.send_menu)
             time.sleep(1000000)
 
     thread = threading.Thread(target=run_job)
@@ -106,7 +105,6 @@ def thanks():
 @app.route("/interactive", methods=["GET", "POST"])
 def respond():
     form_json = json.loads(request.form["payload"])
-
     # Bot should handle all of this logic - so pass all info to bot
     # Check to see what the user's selection was and update the message
     user_id = form_json["user"]["id"]
@@ -164,8 +162,7 @@ def hears():
 def close_connection(exception):
     """
     This is called when the request has been handled to make sure the database 
-    connection closes/flushes. 
-    See this example for more details: http://flask.pocoo.org/docs/0.12/patterns/sqlite3/
+    connection closes/flushes.
     :param exception: n/a
     """
     db = getattr(g, '_database', None)

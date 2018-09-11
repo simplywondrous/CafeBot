@@ -6,7 +6,7 @@ import os
 import time
 import message
 import cafe.script as cafe
-import settings_db as db
+import db.settings_db as db
 
 from slackclient import SlackClient
 
@@ -15,7 +15,7 @@ from slackclient import SlackClient
 # as a global object. When your bot is out of development, it's best to
 # save this in a more persistant memory store.
 
-# Only one team (TTS Slack) in this case
+# Only one team (Target Tech Slack) in this case
 authed_teams = {}
 
 
@@ -68,12 +68,10 @@ class Bot(object):
                                 client_secret=self.oauth["client_secret"],
                                 code=code
                                 )
-        # print(auth_response)
         # To keep track of authorized teams and their associated OAuth tokens,
         # we will save the team ID and bot tokens to the global
         # authed_teams object
         team_id = auth_response["team_id"]
-        #team_id = "T04SM6T1Z"
         authed_teams[team_id] = {"bot_token":
                                 auth_response["bot"]["bot_access_token"]}
         # Then we'll reconnect to the Slack Client with the correct team's 
@@ -103,21 +101,9 @@ class Bot(object):
         return dm_id
 
 
-    # basic message
-    def message_user(self, channel, text):
-        self.client.api_call("chat.postMessage",
-                            channel=channel,
-                            username=self.name,
-                            icon_emoji=self.emoji,
-                            text=text,
-        )
-
-
     def ask_question(self, user_id, message_name):
         """
-        Create and send an onboarding welcome message to new users. Save the
-        time stamp of this message on the message object for updating in the
-        future.
+        Create and send a message to a user.
 
         Parameters
         ----------
@@ -147,7 +133,7 @@ class Bot(object):
                                     "and I deliver the cafeteria menu straight here daily"))
         self.message_user(channel, ("Choose your settings to get started!\n"
                                     "(You'll be able to change these at any time)."))
-        self.ask_question(user_id, "cafe_message")
+        self.ask_question(user_id, "/messages/cafe_message")
 
 
     def format_message(self, menu, price):
@@ -197,10 +183,10 @@ class Bot(object):
         )
         # Brief pause
         time.sleep(1)
-        # save choice, if choice = cafe send next question, else thanks message
+        # save choice, if choice = cafe then send next question, else thanks message
         if callback_id == "cafe_name":
             db.put_cafe_setting(user_id, val_selected)
-            self.ask_question(user_id, "price_message")
+            self.ask_question(user_id, "/messages/price_message")
 
         if callback_id == "price_check":
             db.put_price_setting(user_id, val_selected)

@@ -1,2 +1,4 @@
 # CafeBot
 A project for me to familiarize myself with Python and APIs! Cafebot uses a basic web scraper written in Python for getting the Target Cafe menus. Once installed in Slack, it welcomes users and asks for their preferred cafe location, and then sends that cafe's menu out daily.
+
+There are many improvements to be made to the structure, flow, function, and code cleanliness of this project, however my goal was to have a basic PoC finished by the end of my internship. I'll continue making small projects in an effort to learn and familiarize myself with more technologies, and plan to go back and rewrite this as well as add much more functionality at a later date :)

@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Python Slack Message class for use with the pythOnBoarding bot
+Python Slack Message class
 """
-# TODO: Fix hack with yaml library for handling unicode encoding issues
 import yaml
 
 
@@ -16,8 +15,7 @@ class Message(object):
         self.channel = ""
         self.timestamp = ""
         self.text = ""
-        self.emoji_attachment = {}
-        self.attachments = [self.emoji_attachment]
+        self.attachments = []
 
     def create_attachments(self, file):
         """
