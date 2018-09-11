@@ -3,4 +3,5 @@
 .env
 .DS_Store
 test_message_db.py
+user_settings.db
 *.docx
